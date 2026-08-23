@@ -322,6 +322,11 @@ function play(): void {
   }, 420)
 }
 
+document.querySelector<HTMLAnchorElement>('.wordmark')!.addEventListener('click', (event) => {
+  event.preventDefault()
+  document.querySelector('#top')!.scrollIntoView()
+})
+
 document.querySelectorAll<HTMLButtonElement>('.mode-button').forEach((button) => {
   button.addEventListener('click', () => {
     stop()
