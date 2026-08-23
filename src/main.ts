@@ -1,8 +1,11 @@
 import './style.css'
 import { createHighLearningRateExperiment } from './experiments/high-learning-rate.ts'
 import type { GradientDescentStep, Parameters, Point } from './core/gradient-descent.ts'
+import { parseAtlasState, serializeAtlasState, type AtlasMode } from './core/url-state.ts'
 
 const experiment = createHighLearningRateExperiment()
+const maxStep = experiment.unstable.length - 1
+const initialState = parseAtlasState(window.location.hash, maxStep)
 const app = document.querySelector<HTMLDivElement>('#app')!
 
 app.innerHTML = `
@@ -50,19 +53,19 @@ app.innerHTML = `
         <div class="rail-section controls">
           <p class="rail-label">Run condition</p>
           <div class="mode-switch" role="group" aria-label="Learning rate mode">
-            <button class="mode-button" data-mode="stable" type="button">
+            <button class="mode-button${initialState.mode === 'stable' ? ' is-selected' : ''}" data-mode="stable" type="button">
               <span>stable</span><strong>η ${experiment.stableLearningRate}</strong>
             </button>
-            <button class="mode-button is-selected" data-mode="unstable" type="button">
+            <button class="mode-button${initialState.mode === 'unstable' ? ' is-selected' : ''}" data-mode="unstable" type="button">
               <span>unstable</span><strong>η ${experiment.unstableLearningRate}</strong>
             </button>
           </div>
 
           <label class="step-control" for="step-range">
             <span>Iteration</span>
-            <output id="step-output" for="step-range">0 / 18</output>
+            <output id="step-output" for="step-range">${initialState.step} / ${maxStep}</output>
           </label>
-          <input id="step-range" type="range" min="0" max="18" value="0" />
+          <input id="step-range" type="range" min="0" max="${maxStep}" value="${initialState.step}" />
 
           <div class="transport">
             <button id="play-button" class="primary-action" type="button">Run experiment</button>
@@ -138,10 +141,8 @@ app.innerHTML = `
   </footer>
 `
 
-type Mode = 'stable' | 'unstable'
-
-let mode: Mode = 'unstable'
-let step = 0
+let mode: AtlasMode = initialState.mode
+let step = initialState.step
 let timer: number | undefined
 
 const fitCanvas = document.querySelector<HTMLCanvasElement>('#fit-canvas')!
@@ -260,6 +261,9 @@ function render(): void {
   drawFit(experiment.points, current.parameters)
   drawLoss(run, step)
 
+  document.querySelectorAll<HTMLButtonElement>('.mode-button').forEach((button) => {
+    button.classList.toggle('is-selected', button.dataset.mode === mode)
+  })
   range.value = String(step)
   stepOutput.value = `${step} / ${run.length - 1}`
   document.querySelector('#iteration-value')!.textContent = String(step).padStart(2, '0')
@@ -285,6 +289,16 @@ function render(): void {
     `Iteration ${step}. Loss ${current.loss.toFixed(4)}. ${rising ? 'Loss rising.' : 'Loss controlled.'}`
 }
 
+function syncUrl(): void {
+  const nextUrl = `${window.location.pathname}${window.location.search}${serializeAtlasState({ mode, step })}`
+  window.history.replaceState(null, '', nextUrl)
+}
+
+function renderAndSync(): void {
+  render()
+  syncUrl()
+}
+
 function stop(): void {
   if (timer !== undefined) window.clearInterval(timer)
   timer = undefined
@@ -296,11 +310,14 @@ function play(): void {
     stop()
     return
   }
-  if (step >= history().length - 1) step = 0
+  if (step >= history().length - 1) {
+    step = 0
+    renderAndSync()
+  }
   playButton.textContent = 'Pause'
   timer = window.setInterval(() => {
     step += 1
-    render()
+    renderAndSync()
     if (step >= history().length - 1) stop()
   }, 420)
 }
@@ -308,25 +325,23 @@ function play(): void {
 document.querySelectorAll<HTMLButtonElement>('.mode-button').forEach((button) => {
   button.addEventListener('click', () => {
     stop()
-    mode = button.dataset.mode as Mode
+    mode = button.dataset.mode as AtlasMode
     step = 0
-    document.querySelectorAll('.mode-button').forEach((item) => item.classList.remove('is-selected'))
-    button.classList.add('is-selected')
-    render()
+    renderAndSync()
   })
 })
 
 range.addEventListener('input', () => {
   stop()
   step = Number(range.value)
-  render()
+  renderAndSync()
 })
 playButton.addEventListener('click', play)
 resetButton.addEventListener('click', () => {
   stop()
   step = 0
-  render()
+  renderAndSync()
 })
 
 new ResizeObserver(render).observe(document.querySelector('.plots')!)
-render()
+renderAndSync()
