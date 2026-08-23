@@ -18,6 +18,7 @@ npm run build
 - Analytical mean-squared-error gradients for one-dimensional linear regression.
 - Stable and unstable learning-rate traces.
 - Interactive iteration playback and direct scrubbing.
+- Shareable URL fragments that restore the selected mode and iteration.
 - Canvas visualizations for model fit and logarithmic loss.
 - Accessible status updates and reduced-motion handling.
 
