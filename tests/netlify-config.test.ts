@@ -12,6 +12,13 @@ describe('Netlify deployment configuration', () => {
     expect(config).toMatch(/publish\s*=\s*"dist"/)
   })
 
+  it('pins Netlify builds to Node 24', () => {
+    const config = readFileSync(new URL('netlify.toml', repositoryRoot), 'utf8')
+
+    expect(config).toMatch(/\[build\.environment\]/)
+    expect(config).toMatch(/NODE_VERSION\s*=\s*"24"/)
+  })
+
   it('ignores Netlify local state', () => {
     const ignoredEntries = readFileSync(new URL('.gitignore', repositoryRoot), 'utf8').split(/\r?\n/)
 
