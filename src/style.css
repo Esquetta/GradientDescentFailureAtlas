@@ -28,6 +28,24 @@ body {
 }
 button, input { font: inherit; }
 button { color: inherit; }
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  z-index: 20;
+  padding: 12px 16px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  background: var(--paper);
+  font: 700 11px/1 "Consolas", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.skip-link:focus-visible {
+  left: 0;
+  outline: 3px solid var(--signal);
+  outline-offset: 2px;
+}
 
 .site-header {
   min-height: 68px;
@@ -146,21 +164,29 @@ h1 {
 }
 .experiment-list { list-style: none; margin: 0; padding: 0; }
 .experiment-list li {
+  border-bottom: 1px dashed var(--rule);
+}
+.experiment-button {
+  width: 100%;
+  min-width: 0;
   display: grid;
   grid-template-columns: 28px 1fr auto;
   gap: 8px;
   padding: 12px 0;
+  border: 0;
+  background: transparent;
   color: #8b8678;
-  border-bottom: 1px dashed var(--rule);
+  text-align: left;
   font-size: 12px;
+  cursor: pointer;
 }
-.experiment-list li span, .experiment-list li b {
+.experiment-button span, .experiment-button b {
   font: 600 9px/1.4 "Consolas", monospace;
   text-transform: uppercase;
 }
-.experiment-list li b { color: #a29d90; }
-.experiment-list li.is-active { color: var(--ink); }
-.experiment-list li.is-active b { color: var(--danger); }
+.experiment-button b { color: #a29d90; }
+.experiment-button.is-selected { color: var(--ink); }
+.experiment-button.is-selected b { color: var(--danger); }
 
 .mode-switch {
   display: grid;
@@ -194,6 +220,7 @@ h1 {
   text-transform: uppercase;
 }
 input[type='range'] { width: 100%; accent-color: var(--danger); }
+#step-output, [id$='-value'], .readout strong { font-variant-numeric: tabular-nums; }
 .transport { margin-top: 28px; display: grid; gap: 10px; }
 .primary-action, .text-action {
   min-height: 44px;
@@ -208,9 +235,17 @@ input[type='range'] { width: 100%; accent-color: var(--danger); }
 }
 .text-action { background: transparent; }
 .primary-action:focus-visible, .text-action:focus-visible,
-.mode-button:focus-visible, input:focus-visible {
+.mode-button:focus-visible, .experiment-button:focus-visible, input:focus-visible {
   outline: 3px solid var(--signal);
   outline-offset: 2px;
+}
+@media (hover: hover) {
+  .wordmark:hover { color: var(--danger); }
+  .experiment-button:not(.is-selected):hover { color: var(--ink); }
+  .experiment-button:not(.is-selected):hover b { color: var(--danger); }
+  .mode-button:not(.is-selected):hover { background: var(--paper-deep); }
+  .primary-action:hover { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+  .text-action:hover { color: var(--paper); background: var(--ink); }
 }
 
 .plots { min-width: 0; display: grid; grid-template-rows: 1fr 1fr; }
@@ -266,6 +301,7 @@ canvas { width: 100%; height: 235px; margin-top: 16px; }
   box-shadow: 0 0 0 4px rgba(213, 169, 40, 0.18);
 }
 .status-light.is-danger { background: var(--danger); box-shadow: 0 0 0 4px rgba(199, 71, 47, 0.17); }
+.status-light.is-stable { background: var(--stable); box-shadow: 0 0 0 4px rgba(49, 94, 130, 0.17); }
 .diagnosis dl { margin: 0; }
 .diagnosis dl div { padding: 22px 0; border-bottom: 1px solid var(--rule); }
 .diagnosis dt {
@@ -333,7 +369,7 @@ footer {
   .thesis { grid-column: 1 / -1; border-top: 1px solid var(--rule); border-left: 0; }
   .lab-shell { grid-template-columns: 220px minmax(0, 1fr); }
   .diagnosis { grid-column: 1 / -1; border-top: 1px solid var(--ink); border-left: 0; }
-  .diagnosis dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .diagnosis dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
 }
 @media (max-width: 760px) {
   .site-header, .header-meta { flex-direction: column; }
@@ -354,7 +390,6 @@ footer {
   h1 { font-size: clamp(38px, 12vw, 58px); }
   .lab-shell { display: block; }
   .control-rail, .diagnosis { border-right: 0; }
-  .experiment-list li:not(.is-active) { display: none; }
   .plots { border-top: 1px solid var(--ink); }
   .plot-panel { min-height: 300px; padding-inline: 18px; }
   canvas { height: 210px; }
